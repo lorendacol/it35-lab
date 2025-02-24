@@ -7,7 +7,7 @@ import {
       IonTitle, 
       IonToolbar 
   } from '@ionic/react';
-  const Search: React.FC = () => {
+  const Favorites: React.FC = () => {
     return (
       <IonPage>
         <IonHeader>
@@ -15,7 +15,7 @@ import {
             <IonButtons slot='start'>
               <IonMenuButton></IonMenuButton>
             </IonButtons>
-            <IonTitle>Search</IonTitle>
+            <IonTitle>Favorites</IonTitle>
           </IonToolbar>
         </IonHeader>
         <IonContent fullscreen>
@@ -27,10 +27,11 @@ import {
             height: '100%',
           }}
         >
-          Search
+          Favorites
         </div>
+
+
         </IonContent>
       </IonPage>
     );
   };
-  export default Search;
