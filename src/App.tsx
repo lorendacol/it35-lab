@@ -32,7 +32,7 @@ import '@ionic/react/css/palettes/dark.system.css';
 /* Theme variables */
 import './theme/variables.css';
 import Login from './pages/Login';
-import Menu from './pages/menu';
+import Menu from './pages/Menu';
 
 setupIonicReact();
 
