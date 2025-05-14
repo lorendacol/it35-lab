@@ -6,9 +6,8 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  IonButton,
   IonInput,
-  IonLabel,
+  IonButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -19,8 +18,7 @@ import {
   IonAvatar,
   IonText,
   IonPopover,
-  IonIcon,
-  IonGrid
+  IonIcon
 } from '@ionic/react';
 import { supabase } from '../utils/supabaseClient';
 import { pencil, trash } from 'ionicons/icons';
@@ -78,86 +76,63 @@ const SearchContainer = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent>
-          <IonCard style={{ padding: '1rem', marginBottom: '20px', background: '#f4f4f4', borderRadius: '8px' }}>
-            <IonCardHeader style={{ paddingBottom: '0' }}>
-              <IonCardTitle style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Search Posts</IonCardTitle>
+          <IonCard>
+            <IonCardHeader>
+              <IonCardTitle>Search Posts</IonCardTitle>
             </IonCardHeader>
-            <IonCardContent style={{ padding: '0' }}>
+            <IonCardContent>
               <IonInput
                 value={searchTerm}
                 onIonChange={(e) => setSearchTerm(e.detail.value!)}
                 placeholder="Search for posts..."
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '15px',
-                  border: '1px solid #ccc',
-                  fontSize: '1.1rem',
-                  background: '#fff',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                  marginBottom: '20px',
-                }}
               />
             </IonCardContent>
           </IonCard>
 
-          {filteredPosts.length > 0 ? (
-            filteredPosts.map(post => (
-              <IonCard key={post.post_id} style={{ marginTop: '2rem', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
-                <IonCardHeader style={{ paddingBottom: '0', paddingTop: '10px' }}>
-                  <IonRow>
-                    <IonCol size="1.85">
-                      <IonAvatar>
-                        <img alt={post.username} src={post.avatar_url} />
-                      </IonAvatar>
-                    </IonCol>
-                    <IonCol>
-                      <IonCardTitle style={{ marginTop: '10px', fontWeight: 'bold' }}>{post.username}</IonCardTitle>
-                      <IonCardSubtitle style={{ color: '#777', fontSize: '0.85rem' }}>
-                        {new Date(post.post_created_at).toLocaleString()}
-                      </IonCardSubtitle>
-                    </IonCol>
-                    <IonCol size="auto">
-                      <IonButton
-                        fill="clear"
-                        onClick={(e) => setPopoverState({ open: true, event: e.nativeEvent, postId: post.post_id })}
-                      >
-                        <IonIcon color="secondary" icon={pencil} />
-                      </IonButton>
-                    </IonCol>
-                  </IonRow>
-                </IonCardHeader>
+          {filteredPosts.map(post => (
+            <IonCard key={post.post_id} style={{ marginTop: '2rem' }}>
+              <IonCardHeader>
+                <IonRow>
+                  <IonCol size="1.85">
+                    <IonAvatar>
+                      <img alt={post.username} src={post.avatar_url} />
+                    </IonAvatar>
+                  </IonCol>
+                  <IonCol>
+                    <IonCardTitle>{post.username}</IonCardTitle>
+                    <IonCardSubtitle>{new Date(post.post_created_at).toLocaleString()}</IonCardSubtitle>
+                  </IonCol>
+                  <IonCol size="auto">
+                    <IonButton
+                      fill="clear"
+                      onClick={(e) => setPopoverState({ open: true, event: e.nativeEvent, postId: post.post_id })}
+                    >
+                      <IonIcon color="secondary" icon={pencil} />
+                    </IonButton>
+                  </IonCol>
+                </IonRow>
+              </IonCardHeader>
 
-                <IonCardContent style={{ padding: '15px' }}>
-                  <IonText style={{ color: 'black', fontSize: '1rem' }}>
-                    <p>{post.post_content}</p>
-                  </IonText>
-                </IonCardContent>
+              <IonCardContent>
+                <IonText style={{ color: 'black' }}>
+                  <h1>{post.post_content}</h1>
+                </IonText>
+              </IonCardContent>
 
-                <IonPopover
-                  isOpen={popoverState.open && popoverState.postId === post.post_id}
-                  event={popoverState.event}
-                  onDidDismiss={() => setPopoverState({ open: false, event: null, postId: null })}
-                >
-                  <IonButton
-                    fill="clear"
-                    onClick={() => { startEditingPost(post); setPopoverState({ open: false, event: null, postId: null }); }}
-                  >
-                    Edit
-                  </IonButton>
-                  <IonButton
-                    fill="clear"
-                    color="danger"
-                    onClick={() => { deletePost(post.post_id); setPopoverState({ open: false, event: null, postId: null }); }}
-                  >
-                    Delete
-                  </IonButton>
-                </IonPopover>
-              </IonCard>
-            ))
-          ) : (
-            <IonLabel>No results found for "{searchTerm}"</IonLabel>
-          )}
+              <IonPopover
+                isOpen={popoverState.open && popoverState.postId === post.post_id}
+                event={popoverState.event}
+                onDidDismiss={() => setPopoverState({ open: false, event: null, postId: null })}
+              >
+                <IonButton fill="clear" onClick={() => { startEditingPost(post); setPopoverState({ open: false, event: null, postId: null }); }}>
+                  Edit
+                </IonButton>
+                <IonButton fill="clear" color="danger" onClick={() => { deletePost(post.post_id); setPopoverState({ open: false, event: null, postId: null }); }}>
+                  Delete
+                </IonButton>
+              </IonPopover>
+            </IonCard>
+          ))}
         </IonContent>
       </IonPage>
     </IonApp>
