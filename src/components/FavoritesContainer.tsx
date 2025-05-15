@@ -1,140 +1,224 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  IonPage,
-  IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonList,
-  IonItem,
-  IonLabel,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonAvatar,
+  IonCol,
+  IonRow,
+  IonText,
   IonButton,
-  IonSearchbar,
-  IonModal,
-  IonButtons,
-  IonText
+  IonIcon,
+  IonSpinner,
+  IonToast,
+  IonRefresher,
+  IonRefresherContent
 } from '@ionic/react';
+import { heart, chevronDownCircleOutline } from 'ionicons/icons';
 import { supabase } from '../utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
-function FavoritesContainer() {
-  const [favorites, setFavorites] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
-  const [filtered, setFiltered] = useState<any[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [selectedFeedback, setSelectedFeedback] = useState<any | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+interface Post {
+  post_id: string;
+  user_id: number;
+  username: string;
+  avatar_url: string;
+  post_content: string;
+  post_created_at: string;
+}
+
+interface FavoritePost extends Post {
+  favorite_id: string;
+}
+
+interface SupabaseFavorite {
+  favorite_id: string;
+  post_id: string;
+  posts: Post | null;
+}
+
+const FavoritesContainer: React.FC = () => {
+  const [favorites, setFavorites] = useState<FavoritePost[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error('Error fetching user:', error.message);
-        return;
-      }
-      if (user) {
-        setUserId(user.id);
-        fetchFavorites(user.id);
-      }
-    };
     fetchUser();
   }, []);
 
-  const fetchFavorites = async (uid: string) => {
-    const { data, error } = await supabase
-      .from('favorites')
-      .select('id, feedback:feedback_id(*)')
-      .eq('user_id', uid)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching favorites:', error.message);
-    } else if (data) {
-      setFavorites(data);
-      setFiltered(data);
+  const fetchUser = async () => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user) {
+        setUser(authData.user);
+        await fetchFavorites(authData.user.id);
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      setToastMessage('Error loading user data');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const toggleFavorite = async (feedbackId: string) => {
-    const { error } = await supabase
-      .from('favorites')
-      .delete()
-      .match({ user_id: userId, feedback_id: feedbackId });
+  const fetchFavorites = async (userId: string) => {
+    try {
+      const { data: rawData, error } = await supabase
+        .from('favorites')
+        .select(`
+          favorite_id,
+          post_id,
+          posts (
+            post_id,
+            user_id,
+            username,
+            avatar_url,
+            post_content,
+            post_created_at
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error unfavoriting:', error.message);
-    } else {
-      fetchFavorites(userId!);
+      if (error) {
+        throw error;
+      }
+
+      if (!rawData) {
+        setFavorites([]);
+        return;
+      }
+
+      const data = rawData as unknown as SupabaseFavorite[];
+      
+      const validFavorites = data
+        .filter((fav): fav is SupabaseFavorite & { posts: Post } => fav.posts !== null)
+        .map(fav => ({
+          favorite_id: fav.favorite_id,
+          ...fav.posts
+        }));
+
+      setFavorites(validFavorites);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+      setToastMessage('Error loading favorites');
+      setShowToast(true);
     }
   };
 
-  const handleSearch = (e: CustomEvent) => {
-    const val = e.detail.value.toLowerCase();
-    setSearch(val);
+  const removeFavorite = async (favoriteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('favorite_id', favoriteId);
 
-    const filteredList = favorites.filter(f =>
-      f.feedback.title.toLowerCase().includes(val) ||
-      f.feedback.content.toLowerCase().includes(val)
+      if (error) {
+        console.error('Error removing favorite:', error);
+        setToastMessage('Error removing from favorites');
+        setShowToast(true);
+        return;
+      }
+
+      setFavorites(prev => prev.filter(fav => fav.favorite_id !== favoriteId));
+      setToastMessage('Post removed from favorites');
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      setToastMessage('Error removing from favorites');
+      setShowToast(true);
+    }
+  };
+
+  const handleRefresh = async (event: CustomEvent) => {
+    try {
+      if (user) {
+        await fetchFavorites(user.id);
+      }
+    } finally {
+      event.detail.complete();
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <IonSpinner />
+      </div>
     );
-    setFiltered(filteredList);
-  };
-
-  const openModal = (feedback: any) => {
-    setSelectedFeedback(feedback);
-    setIsModalOpen(true);
-  };
+  }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>My Favorites</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent>
-        <IonSearchbar value={search} onIonInput={handleSearch}></IonSearchbar>
-        <IonList>
-          {filtered.length > 0 ? (
-            filtered.map((fav) => (
-              <IonItem key={fav.id}>
-                <IonLabel onClick={() => openModal(fav.feedback)}>
-                  <h2>{fav.feedback.title}</h2>
-                  <p>{fav.feedback.content.substring(0, 50)}...</p>
-                </IonLabel>
-                <IonButton color="danger" onClick={() => toggleFavorite(fav.feedback.id)}>
-                  Unfavorite
-                </IonButton>
-              </IonItem>
-            ))
-          ) : (
-            <IonItem>
-              <IonLabel>No favorites found.</IonLabel>
-            </IonItem>
-          )}
-        </IonList>
+    <>
+      <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+        <IonRefresherContent
+          pullingIcon={chevronDownCircleOutline}
+          pullingText="Pull to refresh"
+          refreshingSpinner="circles"
+          refreshingText="Refreshing...">
+        </IonRefresherContent>
+      </IonRefresher>
 
-        <IonModal isOpen={isModalOpen} onDidDismiss={() => setIsModalOpen(false)}>
-          <IonHeader>
-            <IonToolbar>
-              <IonTitle>Feedback Details</IonTitle>
-              <IonButtons slot="end">
-                <IonButton onClick={() => setIsModalOpen(false)}>Close</IonButton>
-              </IonButtons>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent className="ion-padding">
-            {selectedFeedback && (
-              <>
-                <IonText>
-                  <h2>{selectedFeedback.title}</h2>
-                  <p>{selectedFeedback.content}</p>
+      <div className="ion-padding">
+        {favorites.length > 0 ? (
+          favorites.map(post => (
+            <IonCard key={post.favorite_id} style={{ marginTop: '1rem' }}>
+              <IonCardHeader>
+                <IonRow>
+                  <IonCol size="1.85">
+                    <IonAvatar>
+                      <img 
+                        src={post.avatar_url || 'https://ionicframework.com/docs/img/demos/avatar.svg'} 
+                        alt={post.username}
+                      />
+                    </IonAvatar>
+                  </IonCol>
+                  <IonCol>
+                    <IonCardTitle style={{ marginTop: '10px' }}>{post.username}</IonCardTitle>
+                    <IonCardSubtitle>{new Date(post.post_created_at).toLocaleString()}</IonCardSubtitle>
+                  </IonCol>
+                  <IonCol size="auto">
+                    <IonButton 
+                      fill="clear" 
+                      onClick={() => removeFavorite(post.favorite_id)}
+                    >
+                      <IonIcon slot="icon-only" icon={heart} color="danger" />
+                    </IonButton>
+                  </IonCol>
+                </IonRow>
+              </IonCardHeader>
+              <IonCardContent>
+                <IonText style={{ color: 'black' }}>
+                  <h1>{post.post_content}</h1>
                 </IonText>
-              </>
-            )}
-          </IonContent>
-        </IonModal>
-      </IonContent>
-    </IonPage>
-  );
-}
+              </IonCardContent>
+            </IonCard>
+          ))
+        ) : (
+          <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <IonText color="medium">
+              <h2>No favorite posts yet</h2>
+              <p>Your favorite posts will appear here</p>
+            </IonText>
+          </div>
+        )}
+      </div>
 
-export default FavoritesContainer;
+      <IonToast
+        isOpen={showToast}
+        onDidDismiss={() => setShowToast(false)}
+        message={toastMessage}
+        duration={2000}
+        position="bottom"
+        color="primary"
+      />
+    </>
+  );
+};
+
+export default FavoritesContainer; 

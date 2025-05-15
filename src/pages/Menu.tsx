@@ -1,4 +1,3 @@
-
 import { 
     IonAlert,
     IonButton,
@@ -27,9 +26,7 @@ import EditProfile from './EditProfile';
 import { supabase } from '../utils/supabaseClient';
 import { useEffect, useState } from 'react';
 
-
-
-  const Menu: React.FC = () => {
+const Menu: React.FC = () => {
     const navigation = useIonRouter();
     const [showAlert, setShowAlert] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -89,7 +86,6 @@ import { useEffect, useState } from 'react';
                             </IonMenuToggle>
                         ))}
 
-                       {/* Logout Button */}
                        <IonButton expand="full" onClick={handleLogout}>
                             <IonIcon icon={logOutOutline} slot="start"></IonIcon>
                             Logout
@@ -99,17 +95,16 @@ import { useEffect, useState } from 'react';
                 </IonMenu>
                 
                 <IonRouterOutlet id="main">
-                    <Route exact path="/it35-lab/app/home" component={Home} />
-                    <Route exact path="/it35-lab/app/home/details" component={Details} />
+                    <Route path="/it35-lab/app/home" component={Home} />
                     <Route exact path="/it35-lab/app/about" component={About} />
                     <Route exact path="/it35-lab/app/profile" component={EditProfile} />
+                    <Route exact path="/it35-lab/app/home/details" component={Details} />
 
                     <Route exact path="/it35-lab/app">
                         <Redirect to="/it35-lab/app/home"/>
                     </Route>
                 </IonRouterOutlet>
 
-                {/* IonAlert for displaying login errors */}
                 <IonAlert
                     isOpen={showAlert}
                     onDidDismiss={() => setShowAlert(false)}
@@ -118,7 +113,6 @@ import { useEffect, useState } from 'react';
                     buttons={['OK']}
                 />
                 
-                {/* IonToast for success message */}
                 <IonToast
                     isOpen={showToast}
                     onDidDismiss={() => setShowToast(false)}
@@ -131,6 +125,6 @@ import { useEffect, useState } from 'react';
             </IonSplitPane>
         </IonPage>
     );
-  };
+};
   
-  export default Menu;
+export default Menu;
