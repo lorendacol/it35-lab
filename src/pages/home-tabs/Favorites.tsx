@@ -1,38 +1,33 @@
-import { 
-    IonButtons,
-      IonContent, 
-      IonHeader, 
-      IonMenuButton, 
-      IonPage, 
-      IonTitle, 
-      IonToolbar 
-  } from '@ionic/react';
-  const Favorites: React.FC = () => {
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonButtons slot='start'>
-              <IonMenuButton></IonMenuButton>
-            </IonButtons>
-            <IonTitle>Favorites</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent fullscreen>
-            
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-          }}
-        >
-          Favorites
-        </div>
+import React from 'react';
+import {
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonMenuButton,
+  IonPage,
+  IonTitle,
+  IonToolbar
+} from '@ionic/react';
 
-        </IonContent>
-      </IonPage>
-    );
-  };
-  export default Favorites;
+import FavoritesContainer from '../../components/FavoritesContainer';
+
+const Favorites: React.FC = () => {
+  return (
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonButtons slot="start">
+            <IonMenuButton />
+          </IonButtons>
+          <IonTitle>Favorites</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+
+      <IonContent fullscreen>
+        <FavoritesContainer />
+      </IonContent>
+    </IonPage>
+  );
+};
+
+export default Favorites;
